@@ -1,0 +1,92 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 26
+    buildToolsVersion "26.0.1"
+    defaultConfig {
+        applicationId "test.com.jimmy.channelpackage"
+        minSdkVersion 15
+        targetSdkVersion 26
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true  //突破应用方法数65535限制
+        manifestPlaceholders = [UMENG_CHANNEL_VALUE: "umeng"]  //默认渠道名替代mainfest 里的渠道值
+
+    }
+    //添加签名文件配置
+    signingConfigs {
+
+        release {
+            storeFile file("/Users/zhangtianjie/myDevelop/androidStudioProjects/SigningKey/test_key.jks")
+            storePassword "zhang123"
+            keyAlias "zhang123"
+            keyPassword "zhang123"
+        }
+        debug {}
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+            //指定release包的输出文件名就是渠道名字
+            applicationVariants.all {
+                variant ->
+                    variant.outputs.each {
+                        output ->
+                            def outputFile = output.outputFile
+                            if (outputFile != null && outputFile.name.endsWith(".apk")) {
+                                def fileName = "${variant.productFlavors[0].name}" + ".apk"
+                                output.outputFile = new File(outputFile.parent, fileName);
+                            }
+                    }
+            }
+        }
+    }
+
+    //多渠道支持脚本
+    productFlavors {
+        xiaomi {
+            // mainfestPlaceholders = [UMENG_CHANNEL_VALUE: "xiaomi"]
+
+            //输出的appname 改变
+//            resValue "string" ,"app_name","xiaomi_app"
+        }
+        wandoujia {
+            //mainfestPlaceholders = [UMENG_CHANNEL_VALUE: "wandoujia"]
+//            resValue "string" ,"app_name","wandoujia_app"
+        }
+
+   /*     okHttp{
+
+            //更具不同的功能点打不同的包，让两个app 可同时安装在同一个设备
+            applicationIdSuffix "okHttp"    //在包名后添加后缀
+            resValue "string" ,"app_name","okpttp_app"
+        }
+        jPush{
+            applicationIdSuffix "jpush"
+            resValue "string" ,"app_name","jpush_app"
+        }*/
+    }
+
+    //也可以通过遍历方式设置
+    productFlavors.all {
+        flavor -> flavor.manifestPlaceholders = [UMENG_CHANNEL_VALUE: name]
+    }
+
+
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile 'com.android.support:appcompat-v7:26.+'
+    compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    testCompile 'junit:junit:4.12'
+    compile 'com.umeng.sdk:common:latest.integration'
+    compile 'com.umeng.sdk:analytics:latest.integration'
+}
